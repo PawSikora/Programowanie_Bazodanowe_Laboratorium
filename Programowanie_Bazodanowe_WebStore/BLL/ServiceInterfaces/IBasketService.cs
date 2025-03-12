@@ -11,8 +11,8 @@ namespace BLL.ServiceInterfaces
     public interface IBasketService
     {
         public Task AddProductToBasket(BasketRequestDTO basketRequestDto);
-        public Task UpdateBasketItemAsync(int userId, int productId, int amount);
-        public  Task RemoveFromBasketAsync(int userId, int productId);
-        public Task<OrderResponseDTO> CreateOrderAsync(int userId);
+        public Task UpdateBasketItem(int userId, int productId, int amount);
+        public  Task RemoveFromBasket(int userId, int productId);
+        public Task<OrderResponseDTO> CreateOrder(int userId);
     }
 }

@@ -9,7 +9,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Model", "Model\Model.csproj
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DAL", "DAL\DAL.csproj", "{9639E427-A8DA-45D9-82B0-5525B12E1016}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BLL", "BLL\BLL.csproj", "{779A51FB-53E6-48C3-9B55-508F9200C678}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BLL", "BLL\BLL.csproj", "{779A51FB-53E6-48C3-9B55-508F9200C678}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BLL_EF", "BLL_EF\BLL_EF.csproj", "{87A1AC2E-E8B3-4B90-8957-29C0B5D30770}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{779A51FB-53E6-48C3-9B55-508F9200C678}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{779A51FB-53E6-48C3-9B55-508F9200C678}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{779A51FB-53E6-48C3-9B55-508F9200C678}.Release|Any CPU.Build.0 = Release|Any CPU
+		{87A1AC2E-E8B3-4B90-8957-29C0B5D30770}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{87A1AC2E-E8B3-4B90-8957-29C0B5D30770}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{87A1AC2E-E8B3-4B90-8957-29C0B5D30770}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{87A1AC2E-E8B3-4B90-8957-29C0B5D30770}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
