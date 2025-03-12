@@ -1,1 +1,1 @@
-# Programowanie_Bazodanowe_Lab01-2
+# Programowanie_Bazodanowe_Laboratorium

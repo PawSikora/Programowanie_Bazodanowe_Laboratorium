@@ -29,19 +29,19 @@ namespace DAL
                 .HasOne(p => p.Group)
                 .WithMany(g => g.Products)
                 .HasForeignKey(p => p.GroupID)
-                .OnDelete(DeleteBehavior.SetNull);
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<ProductGroup>()
                 .HasOne(pg => pg.Parent)
                 .WithMany(pg => pg.SubGroups)
                 .HasForeignKey(pg => pg.ParentID)
-                .OnDelete(DeleteBehavior.SetNull);
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<User>()
                 .HasOne(u => u.Group)
                 .WithMany(ug => ug.Users)
                 .HasForeignKey(u => u.GroupID)
-                .OnDelete(DeleteBehavior.SetNull);
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<BasketPosition>()
                 .HasOne(bp => bp.Product)
