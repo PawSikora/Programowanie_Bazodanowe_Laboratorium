@@ -22,39 +22,73 @@ namespace BLL_EF.Services
             _context = context;
         }
 
-        public async Task<IEnumerable<ProductResponseDTO>> GetProducts(
-    string? nameFilter, string? groupNameFilter, int? groupIdFilter,
-    string? sortBy, bool sortOrder, bool includeInactive)
+        //    public async Task<IEnumerable<ProductResponseDTO>> GetProducts(
+        //string? nameFilter, string? groupNameFilter, int? groupIdFilter,
+        //string? sortBy, bool sortOrder, bool includeInactive)
+        //    {
+        //        var query = _context.Products
+        //            .Include(p => p.Group)
+        //            .ThenInclude(g => g.Parent)
+        //            .Where(p => includeInactive || p.IsActive)
+        //            .AsQueryable();
+
+        //        if (!string.IsNullOrEmpty(nameFilter))
+        //            query = query.Where(p => p.Name.Contains(nameFilter));
+
+        //        if (!string.IsNullOrEmpty(groupNameFilter))
+        //            query = query.Where(p => p.Group != null && p.Group.Name.Contains(groupNameFilter));
+
+        //        if (groupIdFilter.HasValue)
+        //            query = query.Where(p => p.GroupID == groupIdFilter.Value);
+
+        //        query = sortBy switch
+        //        {
+        //            "name" => sortOrder ? query.OrderBy(p => p.Name) : query.OrderByDescending(p => p.Name),
+        //            "price" => sortOrder ? query.OrderBy(p => p.Price) : query.OrderByDescending(p => p.Price),
+        //            _ => query
+        //        };
+
+        //        var products = await query.ToListAsync();
+
+        //        var productResponseDTOs = new List<ProductResponseDTO>();
+
+        //        foreach (var product in products)
+        //        {
+        //            var groupName = product.Group != null ? await GetGroupHierarchy(product.Group) : string.Empty;
+        //            productResponseDTOs.Add(new ProductResponseDTO
+        //            {
+        //                ProductID = product.ID,
+        //                Name = product.Name,
+        //                Price = product.Price,
+        //                GroupName = groupName
+        //            });
+        //        }
+
+        //        return productResponseDTOs;
+        //    }
+
+        public async Task<IEnumerable<ProductResponseDTO>> GetProducts(string? nameFilter, string? groupNameFilter, int? groupIdFilter, string? sortBy, bool sortOrder, bool includeInactive)
         {
-            var query = _context.Products
+            var products = await _context.Products
                 .Include(p => p.Group)
-                .ThenInclude(g => g.Parent)
                 .Where(p => includeInactive || p.IsActive)
-                .AsQueryable();
-
-            if (!string.IsNullOrEmpty(nameFilter))
-                query = query.Where(p => p.Name.Contains(nameFilter));
-
-            if (!string.IsNullOrEmpty(groupNameFilter))
-                query = query.Where(p => p.Group != null && p.Group.Name.Contains(groupNameFilter));
-
-            if (groupIdFilter.HasValue)
-                query = query.Where(p => p.GroupID == groupIdFilter.Value);
-
-            query = sortBy switch
-            {
-                "name" => sortOrder ? query.OrderBy(p => p.Name) : query.OrderByDescending(p => p.Name),
-                "price" => sortOrder ? query.OrderBy(p => p.Price) : query.OrderByDescending(p => p.Price),
-                _ => query
-            };
-
-            var products = await query.ToListAsync();
+                .ToListAsync();
 
             var productResponseDTOs = new List<ProductResponseDTO>();
 
             foreach (var product in products)
             {
-                var groupName = product.Group != null ? await GetGroupHierarchy(product.Group) : string.Empty;
+                var groupName = product.Group != null ? await GetFullGroupHierarchyAsync(product.GroupID) : string.Empty;
+
+                if (!string.IsNullOrEmpty(nameFilter) && !product.Name.Contains(nameFilter))
+                    continue;
+
+                if (!string.IsNullOrEmpty(groupNameFilter) && !groupName.Contains(groupNameFilter))
+                    continue;
+
+                if (groupIdFilter.HasValue && !DoesGroupMatchHierarchy(product.GroupID, groupIdFilter.Value))
+                    continue;
+
                 productResponseDTOs.Add(new ProductResponseDTO
                 {
                     ProductID = product.ID,
@@ -64,26 +98,65 @@ namespace BLL_EF.Services
                 });
             }
 
+            productResponseDTOs = sortBy switch
+            {
+                "name" => sortOrder ? productResponseDTOs.OrderBy(p => p.Name).ToList()
+                                    : productResponseDTOs.OrderByDescending(p => p.Name).ToList(),
+                "price" => sortOrder ? productResponseDTOs.OrderBy(p => p.Price).ToList()
+                                     : productResponseDTOs.OrderByDescending(p => p.Price).ToList(),
+                "group" => sortOrder ? productResponseDTOs.OrderBy(p => p.GroupName).ToList()
+                                     : productResponseDTOs.OrderByDescending(p => p.GroupName).ToList(),
+                _ => productResponseDTOs
+            };
+
             return productResponseDTOs;
         }
 
-        private async Task<string> GetGroupHierarchy(ProductGroup group)
+        private async Task<string> GetFullGroupHierarchyAsync(int? groupId)
         {
-            List<string> groupHierarchy = new List<string>();
+            if (!groupId.HasValue)
+                return string.Empty;
+
+            List<string> hierarchy = new List<string>();
+
             var currentGroup = await _context.ProductGroups
                 .Include(g => g.Parent)
-                .FirstOrDefaultAsync(g => g.ID == group.ID);
+                .FirstOrDefaultAsync(g => g.ID == groupId.Value);
 
             while (currentGroup != null)
             {
-                groupHierarchy.Insert(0, currentGroup.Name);
-                currentGroup = await _context.ProductGroups
-                    .Include(g => g.Parent)
-                    .FirstOrDefaultAsync(g => g.ID == currentGroup.ParentID);
+                hierarchy.Insert(0, currentGroup.Name);
+                if (currentGroup.ParentID.HasValue)
+                    currentGroup = await _context.ProductGroups
+                        .Include(g => g.Parent)
+                        .FirstOrDefaultAsync(g => g.ID == currentGroup.ParentID.Value);
+                else
+                    currentGroup = null;
             }
 
-            return string.Join("/", groupHierarchy);
+            return string.Join(" / ", hierarchy);
         }
+
+        private bool DoesGroupMatchHierarchy(int? productGroupId, int targetGroupId)
+        {
+            if (!productGroupId.HasValue)
+                return false;
+
+            var currentGroup = _context.ProductGroups
+                .Include(g => g.Parent)
+                .FirstOrDefault(g => g.ID == productGroupId.Value);
+
+            while (currentGroup != null)
+            {
+                if (currentGroup.ID == targetGroupId)
+                    return true;
+
+                currentGroup = currentGroup.Parent;
+            }
+
+            return false;
+        }
+
 
         public async Task AddProduct(ProductRequestDTO productDto)
         {
@@ -108,17 +181,23 @@ namespace BLL_EF.Services
                 await _context.SaveChangesAsync();
             }
         }
-
+        
         public async Task DeleteProduct(int productId)
         {
-            var product = await _context.Products.FindAsync(productId);
-            if (product != null)
-            {
-                _context.Products.Remove(product);
-                await _context.SaveChangesAsync();
-            }
-        }
+            var product = await _context.Products
+                .Include(p => p.OrderPositions)
+                .FirstOrDefaultAsync(p => p.ID == productId);
 
+            if (product == null)
+                throw new InvalidOperationException("Product not found.");
+
+            if (product.OrderPositions.Any())
+                throw new InvalidOperationException("Cannot delete a product that is linked to order items.");
+
+            _context.Products.Remove(product);
+            await _context.SaveChangesAsync();
+        }
+        
         public async Task<IEnumerable<GroupResponseDTO>> GetGroups(int? parentId, string? sortBy, bool sortOrder)
         {
             var query = _context.ProductGroups.AsQueryable();

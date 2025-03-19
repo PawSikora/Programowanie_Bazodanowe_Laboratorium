@@ -1,3 +1,5 @@
+using BLL.ServiceInterfaces;
+using BLL_EF.Services;
 using DAL;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -13,6 +15,11 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<WebstoreContext>();
+
+builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<IBasketService, BasketService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 var app = builder.Build();
 

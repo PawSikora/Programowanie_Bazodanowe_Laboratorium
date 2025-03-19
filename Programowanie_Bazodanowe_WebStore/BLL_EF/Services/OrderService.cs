@@ -65,7 +65,6 @@ namespace BLL_EF.Services
             };
         }
 
-
         public async Task PayOrder(int orderId, double amount)
         {
             var order = await _context.Orders
@@ -75,16 +74,16 @@ namespace BLL_EF.Services
             if (order == null)
                 throw new InvalidOperationException("Order not found.");
 
+            if (order.IsPaid)
+                throw new InvalidOperationException("This order has already been paid for.");
+
             double totalValue = order.OrderPositions.Sum(op => op.Price * op.Amount);
-            if (amount >= totalValue)
-            {
-                order.IsPaid = true;
-                await _context.SaveChangesAsync();
-            }
-            else
-            {
-                throw new InvalidOperationException("Insufficient amount.");
-            }
+
+            if (Math.Abs(amount - totalValue) > 0.01)
+                throw new InvalidOperationException("The provided amount does not match the total order value.");
+
+            order.IsPaid = true;
+            await _context.SaveChangesAsync();
         }
 
     }

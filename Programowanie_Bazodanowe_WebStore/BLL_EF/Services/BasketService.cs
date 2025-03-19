@@ -52,9 +52,7 @@ namespace BLL_EF.Services
                 .ToListAsync();
 
             if (!basketItems.Any())
-            {
                 throw new InvalidOperationException("Basket is empty.");
-            }
 
             var order = new Order
             {
