@@ -5,6 +5,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using System;
 using BLL_DB.Services;
+using MongoDB.Driver;
+using BLL_MongoDb.Services;
+using MongoDB.Bson.Serialization.Conventions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,7 +18,8 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddDbContext<WebstoreContext>();
+
+//builder.Services.AddDbContext<WebstoreContext>();
 
 //builder.Services.AddScoped<IProductService, ProductService>();
 //builder.Services.AddScoped<IBasketService, BasketService>();
@@ -27,13 +31,26 @@ builder.Services.AddDbContext<WebstoreContext>();
 //builder.Services.AddScoped<IOrderService, OrderServiceDB>();
 //builder.Services.AddScoped<IUserService, UserServiceDB>();
 
-var connectionString =
-    "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=WebStoreDB2;Integrated Security=True;Connect Timeout=30;Encrypt=False;Trust Server Certificate=False;Application Intent=ReadWrite;Multi Subnet Failover=False";
+//var connectionString = builder.Configuration.GetConnectionString("WebstoreDb");
 
-builder.Services.AddScoped<IBasketService>(_ => new BasketServiceDB(connectionString));
-builder.Services.AddScoped<IOrderService>(_ => new OrderServiceDB(connectionString));
-builder.Services.AddScoped<IProductService>(_ => new ProductServiceDB(connectionString));
-builder.Services.AddScoped<IUserService>(_ => new UserServiceDB(connectionString));
+//builder.Services.AddScoped<IBasketService>(_ => new BasketServiceDB(connectionString));
+//builder.Services.AddScoped<IOrderService>(_ => new OrderServiceDB(connectionString));
+//builder.Services.AddScoped<IProductService>(_ => new ProductServiceDB(connectionString));
+//builder.Services.AddScoped<IUserService>(_ => new UserServiceDB(connectionString));
+
+builder.Services.AddSingleton<IMongoClient>(sp =>
+    new MongoClient(builder.Configuration.GetConnectionString("WebStoreMongoDb")));
+
+builder.Services.AddScoped(sp =>
+    sp.GetRequiredService<IMongoClient>().GetDatabase("webStoreDb"));
+
+builder.Services.AddScoped<IProductService, MongoProductService>();
+builder.Services.AddScoped<IBasketService, MongoBasketService>();
+builder.Services.AddScoped<IOrderService, MongoOrderService>();
+builder.Services.AddScoped<IUserService, MongoUserService>();
+
+var conventionPack = new ConventionPack { new CamelCaseElementNameConvention() };
+ConventionRegistry.Register("CamelCase", conventionPack, t => true);
 
 var app = builder.Build();
 
